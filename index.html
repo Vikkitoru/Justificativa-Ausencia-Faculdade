@@ -209,6 +209,20 @@
             background: #ecfdf5;
             border-style: solid;
         }
+
+        /* Estilo padrão (Mobile - dispositivos pequenos) */
+        .logo-responsiva {
+            width: 45%; /* Tamanho para mobile */
+            height: auto; /* Mantém a proporção */
+        }
+
+        /* Estilo para computadores (Telas maiores que 768px - Tablet/Desktop) */
+        @media screen and (min-width: 769px) {
+            .logo-responsiva {
+                width: 22%; /* Tamanho para desktop */
+            }
+        }
+
     </style>
 </head>
 
@@ -217,14 +231,17 @@
     <header class="bg-fmm-navy text-white p-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-5xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
+                <container>
                 <div>
-                    <h1 class="text-xs font-bold uppercase tracking-tight">Faculdade Matias Machline</h1>
-                    <p class="text-[9px] text-fmm-steel font-semibold uppercase tracking-wider">Justificativa Acadêmica
-                    </p>
+                    <h1>
+                        <img src="assets/logo-fmm-white.png" alt="Logo" class="logo-responsiva">
+                    </h1>
+                    <p class="text-[11px] text-fmm-steel font-semibold uppercase tracking-wider">Justificativa de Ausência</p>
                 </div>
+                </container>
             </div>
             <div
-                class="bg-fmm-emerald/20 text-fmm-emerald px-3 py-1 rounded-full text-[10px] font-bold border border-fmm-emerald/30">
+                class="bg-fmm-emerald/20 text-fmm-emerald px-3 py-1 rounded-full text-[10px] font-bold border border-fmm-emerald/50" align="center">
                 SUPERIOR • 2026
             </div>
         </div>
@@ -411,12 +428,6 @@
                         .or(`nome.ilike.%${val}%,ra.ilike.%${val}%`)
                         .limit(5);
                     if (!error) results = data;
-                } else {
-                    results = [
-                        { ra: '2024001', nome: 'CARLOS ALBERTO SILVA', curso: 'ADS', email: 'carlos@fmm.br' },
-                        { ra: '2024002', nome: 'ANA PAULA OLIVEIRA', curso: 'ENG. SOFTWARE', email: 'ana@fmm.br' },
-                        { ra: '2024003', nome: 'FELIPE MACHLINE', curso: 'ADS', email: 'felipe@fmm.br' }
-                    ].filter(s => s.nome.includes(val.toUpperCase()) || s.ra.includes(val));
                 }
 
                 if (results.length > 0) {
