@@ -10,7 +10,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     
 
     <script>
@@ -316,16 +318,46 @@
                             <option value="ALL">Todos os Cursos</option>
                         </select>
                     </div>
+                    <div class="relative w-full sm:w-56">
+                        <label
+                            class="absolute -top-2 left-3 px-1 bg-fmm-light text-[9px] font-bold text-fmm-steel uppercase tracking-widest z-10">
+                            Perdeu Prova
+                        </label>
+
+                        <select id="exam-filter" onchange="handleFilterChange()"
+                            class="fmm-select w-full h-11 bg-white border border-gray-200 rounded-xl px-4 text-[10px] font-bold text-fmm-navy uppercase tracking-widest shadow-sm outline-none">
+                            
+                            <option value="ALL">Todos</option>
+                            <option value="SIM">SIM</option>
+                            <option value="NAO">NÃO</option>
+
+                        </select>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-2">
+
+
+                <div class="flex justify-between items-center gap-2">
                     <span
-                        class="px-4 py-2 bg-white rounded-xl text-[10px] font-bold text-fmm-steel uppercase tracking-widest border border-gray-200 shadow-sm"
+                        class="h-11 px-4 bg-white rounded-xl flex items-center justify-center text-[10px] font-bold text-fmm-steel uppercase tracking-widest border border-gray-200 shadow-sm"
                         id="results-counter">
                         0 protocolos encontrados
                     </span>
+
+                    <span id="results-counter" class="text-xs font-semibold text-fmm-steel"></span>
+
+                    <button onclick="exportToExcel()"
+                        class="h-11 px-5 bg-fmm-navy text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm hover:opacity-90">
+                        Exportar Planilha
+                    </button>
                 </div>
+                
+    
+
+
+
             </div>
+            
 
             <!-- Tabela -->
             <div class="glass-card rounded-3xl shadow-2xl overflow-hidden min-h-[500px] animate-fade-in"
@@ -447,7 +479,8 @@
         function saveFiltersState() {
             const filters = {
                 status: document.getElementById('status-filter')?.value || 'ALL',
-                course: document.getElementById('course-filter')?.value || 'ALL'
+                course: document.getElementById('course-filter')?.value || 'ALL',
+                exam: document.getElementById('exam-filter')?.value || 'ALL'
             };
             try {
                 sessionStorage.setItem(FILTERS_STATE_KEY, JSON.stringify(filters));
@@ -844,10 +877,18 @@
         function applyFilters() {
             const statusVal = document.getElementById('status-filter').value;
             const courseVal = document.getElementById('course-filter').value;
+            const examVal = document.getElementById('exam-filter').value;
 
             let filtered = allRequests;
-            if (statusVal !== 'ALL') filtered = filtered.filter(r => r.status === statusVal);
-            if (courseVal !== 'ALL') filtered = filtered.filter(r => r.curso === courseVal);
+            if (statusVal !== 'ALL') 
+                filtered = filtered.filter(r => r.status === statusVal);
+            if (courseVal !== 'ALL') 
+                filtered = filtered.filter(r => r.curso === courseVal);
+            if (examVal === 'SIM')
+                filtered = filtered.filter(r => r.perdeu_prova === true);
+
+            if (examVal === 'NAO')
+                filtered = filtered.filter(r => r.perdeu_prova === false);
 
             document.getElementById('results-counter').innerText = `${filtered.length} protocolos encontrados`;
             renderTable(filtered);
@@ -912,6 +953,48 @@
                 </tr>`;
                 return;
             }
+            
+        //Função Exportar para Excel
+        function exportToExcel() {
+            // usa os dados já filtrados na tela
+            const statusVal = document.getElementById('status-filter').value;
+            const courseVal = document.getElementById('course-filter').value;
+            const examVal = document.getElementById('exam-filter').value;
+
+            let filtered = allRequests;
+
+            if (statusVal !== 'ALL')
+                filtered = filtered.filter(r => r.status === statusVal);
+
+            if (courseVal !== 'ALL')
+                filtered = filtered.filter(r => r.curso === courseVal);
+
+            if (examVal !== 'ALL')
+                filtered = filtered.filter(r => r.perdeu_prova === (examVal === 'SIM'));
+
+            const data = filtered.map(r => ({
+                "Data/Hora": new Date(r.created_at).toLocaleString('pt-BR'),
+                "Data Início": r.data_inicio || '',
+                "Aluno": r.aluno_nome || '',
+                "RA": r.ra || '',
+                "Curso": r.curso || '',
+                "Motivo": r.motivo || '',
+                "Dias": r.qtd_dias || '',
+                "Documento": r.documento ? 'Sim' : 'Não',
+                "Status": r.status || '',
+                "Perdeu Prova": r.perdeu_prova ? 'Sim' : 'Não',
+                "Quais Provas": r.quais_provas || ''
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(data);
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Justificativas");
+
+            XLSX.writeFile(workbook, "controle_justificativas.xlsx");
+        }
+        
+            
 
             tbody.innerHTML = requests.map(req => {
                 const date = new Date(req.created_at).toLocaleString('pt-BR');
