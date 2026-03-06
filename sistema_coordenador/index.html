@@ -416,6 +416,8 @@
         const FILTERS_STATE_KEY = 'fmm_filters_state';
         const SELECTION_STATE_KEY = 'fmm_selection_state';
 
+        
+
         function saveSessionData(user) {
             if (!user) return;
             const sessionData = {
@@ -770,6 +772,7 @@
         // =========================
         // Data / Table
         // =========================
+
         async function loadRequests(useCache = true) {
             try {
                 // Tenta usar cache primeiro se disponível
@@ -890,7 +893,7 @@
             if (examVal === 'NAO')
                 filtered = filtered.filter(r => r.perdeu_prova === false);
 
-            document.getElementById('results-counter').innerText = `${filtered.length} protocolos encontrados`;
+            document.getElementById('results-counter').innerText = `${filtered.length} protocolo(s) encontrado(s)`;
             renderTable(filtered);
             lucide.createIcons();
         }
@@ -953,47 +956,7 @@
                 </tr>`;
                 return;
             }
-            
-        //Função Exportar para Excel
-        function exportToExcel() {
-            // usa os dados já filtrados na tela
-            const statusVal = document.getElementById('status-filter').value;
-            const courseVal = document.getElementById('course-filter').value;
-            const examVal = document.getElementById('exam-filter').value;
-
-            let filtered = allRequests;
-
-            if (statusVal !== 'ALL')
-                filtered = filtered.filter(r => r.status === statusVal);
-
-            if (courseVal !== 'ALL')
-                filtered = filtered.filter(r => r.curso === courseVal);
-
-            if (examVal !== 'ALL')
-                filtered = filtered.filter(r => r.perdeu_prova === (examVal === 'SIM'));
-
-            const data = filtered.map(r => ({
-                "Data/Hora": new Date(r.created_at).toLocaleString('pt-BR'),
-                "Data Início": r.data_inicio || '',
-                "Aluno": r.aluno_nome || '',
-                "RA": r.ra || '',
-                "Curso": r.curso || '',
-                "Motivo": r.motivo || '',
-                "Dias": r.qtd_dias || '',
-                "Documento": r.documento ? 'Sim' : 'Não',
-                "Status": r.status || '',
-                "Perdeu Prova": r.perdeu_prova ? 'Sim' : 'Não',
-                "Quais Provas": r.quais_provas || ''
-            }));
-
-            const worksheet = XLSX.utils.json_to_sheet(data);
-
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Justificativas");
-
-            XLSX.writeFile(workbook, "controle_justificativas.xlsx");
-        }
-        
+              
             
 
             tbody.innerHTML = requests.map(req => {
@@ -1329,6 +1292,49 @@
             }
             document.getElementById('doc-iframe').src = "";
             document.getElementById('doc-img').src = "";
+        }
+
+                //Função Exportar para Excel
+        function exportToExcel() {
+
+            if (!allRequests || allRequests.length === 0) {
+                alert("Não há dados para exportar.");
+                return;
+            }
+
+            const statusVal = document.getElementById('status-filter')?.value || 'ALL';
+            const courseVal = document.getElementById('course-filter')?.value || 'ALL';
+            const examVal = document.getElementById('exam-filter')?.value || 'ALL';
+
+            let filtered = [...allRequests];
+
+            if (statusVal !== 'ALL')
+                filtered = filtered.filter(r => r.status === statusVal);
+
+            if (courseVal !== 'ALL')
+                filtered = filtered.filter(r => r.curso === courseVal);
+
+            if (examVal !== 'ALL')
+                filtered = filtered.filter(r => r.perdeu_prova === (examVal === 'SIM'));
+
+            const data = filtered.map(r => ({
+                "Data/Hora": new Date(r.created_at).toLocaleString('pt-BR'),
+                "Aluno": r.aluno_nome,
+                "RA": r.ra,
+                "Curso": r.curso,
+                "Motivo": r.motivo,
+                "Dias": r.qtd_dias,
+                "Status": r.status,
+                "Perdeu Prova": r.perdeu_prova ? "Sim" : "Não",
+                "Quais Provas": r.provas_detalhes || ""
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(data);
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Justificativas");
+
+            XLSX.writeFile(workbook, "controle_justificativas.xlsx");
         }
 
         // =========================
